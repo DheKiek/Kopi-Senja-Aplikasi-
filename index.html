@@ -391,7 +391,7 @@ function doLogin(u,p){var rec=null;for(var i=0;i<users.length;i++){if(users[i].u
 function enterApp(){$('#app-user-pill').innerHTML='<i class="ri-user-line"></i> '+esc(session.name)+' · '+(session.role==='admin'?'Admin Pemilik':'Kasir');renderTabs();showView('view-app');showTab('pos')}
 function logout(){session=null;try{localStorage.removeItem(K.ss)}catch(e){}cart={};showView('view-login');$('#in-pass').value='';$('#in-user').value=''}
 
-function openModal(html){$('#modal-root').innerHTML='<div class="ovl" data-action="modal-close"><div class="mbox" onclick="event.stopPropagation()">'+html+'</div></div>'}
+function openModal(html){$('#modal-root').innerHTML='<div class="ovl" id="modal-ovl"><div class="mbox">'+html+'</div></div>'}
 function closeModal(){$('#modal-root').innerHTML=''}
 function modalHead(t,sub){return '<div class="flex items-center justify-between mb-3"><div><strong style="font-size:16px">'+t+'</strong><div class="muted" style="font-size:12px">'+(sub||'')+'</div></div><button class="btn btn-sm" data-action="modal-close"><i class="ri-close-line"></i></button></div>'}
 
@@ -455,6 +455,7 @@ function exportJSON(){var data={users:users,products:products,ingredients:ingred
 var pendingFileData=null;
 
 document.addEventListener('click',function(e){
+  if(e.target.id==='modal-ovl'){closeModal();return}
   var fill=e.target.closest('[data-fill]');
   if(fill){var rec=null;for(var i=0;i<users.length;i++){if(users[i].u===fill.dataset.fill){rec=users[i];break}}if(rec){$('#in-user').value=rec.u;$('#in-pass').value=rec.p;$('#login-err').style.display='none'}return}
   var b=e.target.closest('[data-action]');if(!b)return;var a=b.dataset.action;
@@ -505,15 +506,26 @@ document.addEventListener('click',function(e){
 document.addEventListener('submit',function(e){
   e.preventDefault();var f=e.target;
   if(f.id==='f-login'){doLogin($('#in-user').value.trim(),$('#in-pass').value)}
-  else if(f.id==='f-product'){var name=$('#pf-name').value.trim();var cat=$('#pf-cat').value;var price=parseFloat($('#pf-price').value)||0;var stock=parseFloat($('#pf-stock').value)||0;if(!name||price<=0)return;if(editingProduct){var ix=-1;for(var i=0;i<products.length;i++){if(products[i].id===editingProduct.id){ix=i;break}}products[ix]={id:editingProduct.id,name:name,cat:cat,price:price,stock:stock}}else{products.push({id:rid('p'),name:name,cat:cat,price:price,stock:stock})}ss(K.p,products);closeModal();renderMenuTable()}
-  else if(f.id==='f-ing'){var nm=$('#if-name').value.trim();var unit=$('#if-unit').value.trim()||'pcs';var st=parseFloat($('#if-stock').value)||0;var buy=parseFloat($('#if-buy').value)||0;if(!nm||buy<0)return;if(editingIng){var jx=-1;for(var j=0;j<ingredients.length;j++){if(ingredients[j].id===editingIng.id){jx=j;break}}ingredients[jx]={id:editingIng.id,name:nm,unit:unit,stock:st,buy:buy}}else{ingredients.push({id:rid('i'),name:nm,unit:unit,stock:st,buy:buy})}ss(K.ing,ingredients);closeModal();renderHpp()}
-  else if(f.id==='f-exp'){var ts=new Date($('#ex-date').value+'T09:00:00').getTime();var cat=$('#ex-cat').value;var amount=parseFloat($('#ex-amount').value)||0;var note=$('#ex-note').value.trim();if(!amount)return;exps.unshift({id:rid('e'),ts:ts,cat:cat,amount:amount,note:note});ss(K.ex,exps);$('#ex-amount').value='';$('#ex-note').value='';renderExpenses()}
-  else if(f.id==='f-user'){var uname=$('#uf-name').value.trim();var uu=$('#uf-u').value.trim();var up=$('#uf-p').value;var role=$('#uf-role').value;var active=$('#uf-active').checked;if(!uname||!uu)return;var dup=users.some(function(x){return x.u===uu&&(!editingUser||x.id!==editingUser.id)});if(dup){openModal(modalHead('Username Dipakai','Username "'+esc(uu)+'" sudah ada. Gunakan yang lain.')+'<button class="btn btn-primary mt-2" data-action="modal-close">Mengerti</button>');return}if(editingUser){var ux=-1;for(var u=0;u<users.length;u++){if(users[u].id===editingUser.id){ux=u;break}}users[ux]={id:editingUser.id,name:uname,u:uu,p:up||editingUser.p,role:role,active:active}}else{users.push({id:rid('u'),name:uname,u:uu,p:up||'12345',role:role,active:active})}ss(K.u,users);closeModal();renderUsers()}
+  else if(f.id==='f-product'){var name=$('#pf-name').value.trim();var cat=$('#pf-cat').value;var price=parseFloat($('#pf-price').value)||0;var stock=parseFloat($('#pf-stock').value)||0;if(!name||price<=0){alert('Nama menu dan harga jual (lebih dari 0) wajib diisi.');return;}if(editingProduct){var ix=-1;for(var i=0;i<products.length;i++){if(products[i].id===editingProduct.id){ix=i;break}}products[ix]={id:editingProduct.id,name:name,cat:cat,price:price,stock:stock}}else{products.push({id:rid('p'),name:name,cat:cat,price:price,stock:stock})}ss(K.p,products);closeModal();renderMenuTable()}
+  else if(f.id==='f-ing'){var nm=$('#if-name').value.trim();var unit=$('#if-unit').value.trim()||'pcs';var st=parseFloat($('#if-stock').value)||0;var buy=parseFloat($('#if-buy').value)||0;if(!nm||buy<0){alert('Nama bahan dan harga beli wajib diisi.');return;}if(editingIng){var jx=-1;for(var j=0;j<ingredients.length;j++){if(ingredients[j].id===editingIng.id){jx=j;break}}ingredients[jx]={id:editingIng.id,name:nm,unit:unit,stock:st,buy:buy}}else{ingredients.push({id:rid('i'),name:nm,unit:unit,stock:st,buy:buy})}ss(K.ing,ingredients);closeModal();renderHpp()}
+  else if(f.id==='f-exp'){var ts=new Date($('#ex-date').value+'T09:00:00').getTime();var cat=$('#ex-cat').value;var amount=parseFloat($('#ex-amount').value)||0;var note=$('#ex-note').value.trim();if(!amount){alert('Nominal biaya wajib diisi.');return;}exps.unshift({id:rid('e'),ts:ts,cat:cat,amount:amount,note:note});ss(K.ex,exps);$('#ex-amount').value='';$('#ex-note').value='';renderExpenses()}
+  else if(f.id==='f-user'){var uname=$('#uf-name').value.trim();var uu=$('#uf-u').value.trim();var up=$('#uf-p').value;var role=$('#uf-role').value;var active=$('#uf-active').checked;if(!uname||!uu){alert('Nama lengkap dan username wajib diisi.');return;}var dup=users.some(function(x){return x.u===uu&&(!editingUser||x.id!==editingUser.id)});if(dup){openModal(modalHead('Username Dipakai','Username "'+esc(uu)+'" sudah ada. Gunakan yang lain.')+'<button class="btn btn-primary mt-2" data-action="modal-close">Mengerti</button>');return}if(editingUser){var ux=-1;for(var u=0;u<users.length;u++){if(users[u].id===editingUser.id){ux=u;break}}users[ux]={id:editingUser.id,name:uname,u:uu,p:up||editingUser.p,role:role,active:active}}else{users.push({id:rid('u'),name:uname,u:uu,p:up||'12345',role:role,active:active})}ss(K.u,users);closeModal();renderUsers()}
   else if(f.id==='f-korder'){var entries=kEntries();if(!entries.length)return;var method=document.querySelector('input[name=kmethod]:checked');var mm=method?method.value:'qris';var tot=entries.reduce(function(a,e){return a+e.p.price*e.q},0);var code='KS-'+String(Math.floor(1000+Math.random()*9000));var items=entries.map(function(e){return{pid:e.p.id,name:e.p.name,qty:e.q,price:e.p.price}});var o={id:rid('o'),code:code,ts:Date.now(),name:($('#kf-name').value||'').trim(),table:($('#kf-table').value||'').trim(),items:items,total:tot,method:mm,status:'pending'};orders.unshift(o);ss(K.od,orders);kCart={};closeModal();renderKiosk();openKWait(o)}
 });
 
 document.addEventListener('input',function(e){var t=e.target;if(t.id==='pos-search'){posQ=t.value;renderPOS()}else if(t.id==='k-search'){kQ=t.value;renderKiosk()}else if(t.id==='pay-cash'){updateChange()}else if(t.closest&&t.closest('#hpp-rows')){updateHppMini($('#hpp-pid').value)}});
 document.addEventListener('change',function(e){if(e.target.id==='qr-file'){var file=e.target.files&&e.target.files[0];if(!file)return;var rd=new FileReader();rd.onload=function(){pendingFileData=rd.result;renderSettings()};rd.readAsDataURL(file)}});
+
+
+document.addEventListener('DOMContentLoaded', function(){
+  console.log('✅ Aplikasi Kopi Senja dimuat...');
+  seedAll();
+  if(session) {
+    enterApp();
+  } else {
+    showView('view-landing');
+  }
+});
 
 seedAll();
 showView('view-landing');
